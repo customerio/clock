@@ -82,28 +82,9 @@ type Mock interface {
 	// Freeze stops the clock's time.
 	Freeze() Mock
 
-	// Freeze stops the clock's time at the passed-in moment.
-	FreezeAt(t time.Time) Mock
-
 	// IsFrozen is whether the clock's time is stopped.
 	IsFrozen() bool
 
 	// Unfreeze starts the clock's time again.
 	Unfreeze() Mock
-
-	// ==== manipulate Sleep()
-
-	// SetSleep overrides the passed-in argument to the Sleep method.
-	SetSleep(d time.Duration) Mock
-
-	// NoSleep disables the Sleep method.
-	NoSleep() Mock
-
-	// ResetSleep re-enables the default Sleep behaviour.
-	ResetSleep() Mock
-
-	// ==== manipulate After()
-
-	// SetAfter overrides the passed-in argument to the After method.
-	// SetAfter(d time.Duration) Mock
 }
