@@ -2,6 +2,7 @@ package clock
 
 import (
 	"time"
+
 	. "github.com/101loops/bdd"
 )
 
@@ -41,7 +42,7 @@ var _ = Describe("Mock Clock", func() {
 	})
 
 	It("freezes at passed-in time", func() {
-		clock := NewMock().FreezeAt(fixedTime)
+		clock := NewMock().Freeze().Set(fixedTime)
 		Check(clock.IsFrozen(), IsTrue)
 
 		time.Sleep(delay)
@@ -50,40 +51,19 @@ var _ = Describe("Mock Clock", func() {
 	})
 
 	It("unfreezes", func() {
-		clock := NewMock().Add(1 * time.Hour).Freeze()
+		clock := NewMock().Freeze()
 		Check(clock.IsFrozen(), IsTrue)
+		old := clock.Now()
 
 		time.Sleep(delay)
 
 		clock.Unfreeze()
 		Check(clock.IsFrozen(), IsFalse)
-		Check(timeDiff(clock), IsRoughly, -1*time.Hour+delay, threshold)
+		Check(old.Sub(clock.Now()), IsRoughly, 0, threshold)
 	})
 
 	It("can sleep", func() {
 		clock := NewMock()
-
-		slept := durationOf(func() { clock.Sleep(delay) })
-		Check(slept, IsRoughly, delay, threshold)
-	})
-
-	It("disables sleep", func() {
-		clock := NewMock().NoSleep()
-
-		slept := durationOf(func() { clock.Sleep(delay) })
-		Check(slept, IsLessThan, delay)
-	})
-
-	It("overwrites sleep argument", func() {
-		clock := NewMock().SetSleep(delay)
-
-		slept := durationOf(func() { clock.Sleep(2 * time.Second) })
-		Check(slept, IsRoughly, delay, threshold)
-	})
-
-	It("resets sleep override", func() {
-		clock := NewMock().SetSleep(2 * time.Second)
-		clock.ResetSleep()
 
 		slept := durationOf(func() { clock.Sleep(delay) })
 		Check(slept, IsRoughly, delay, threshold)
