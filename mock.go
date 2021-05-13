@@ -91,6 +91,7 @@ func (c *mock) Add(d time.Duration) Mock {
 
 	c.base = c.base.Add(d)
 	c.wakeup()
+
 	return c
 }
 
