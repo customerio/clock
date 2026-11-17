@@ -1,77 +1,75 @@
 package clock
 
 import (
+	"testing"
 	"time"
-
-	. "github.com/101loops/bdd"
 )
 
-var (
-	fixedTime = time.Unix(1415926535, 0)
-)
+var fixedTime = time.Unix(1415926535, 0)
 
-var _ = Describe("Mock Clock", func() {
+func TestMockReturnsTime(t *testing.T) {
+	clock := NewMock()
+	if clock.IsFrozen() {
+		t.Fatal("new mock should not be frozen")
+	}
+	checkLess(t, timeDiff(clock), time.Millisecond)
+}
 
-	It("returns the time", func() {
-		clock := NewMock()
-		Check(clock.IsFrozen(), IsFalse)
-		Check(timeDiff(clock), IsLessThan, 1*time.Millisecond)
-	})
+func TestMockSetsTime(t *testing.T) {
+	clock := NewMock().Set(fixedTime)
+	checkLess(t, clock.Now().Sub(fixedTime), time.Millisecond)
+	time.Sleep(delay)
+	checkRoughly(t, clock.Now().Sub(fixedTime), delay, threshold)
+}
 
-	It("sets time", func() {
-		clock := NewMock().Set(fixedTime)
-		Check(clock.Now().Sub(fixedTime), IsLessThan, 1*time.Millisecond)
+func TestMockAddNotFrozen(t *testing.T) {
+	checkRoughly(t, timeDiff(NewMock().Add(time.Hour)), -time.Hour, threshold)
+}
 
-		time.Sleep(delay)
-		Check(clock.Now().Sub(fixedTime), IsRoughly, delay, threshold)
-	})
+func TestMockAddFrozen(t *testing.T) {
+	clock := NewMock().Freeze()
+	clock.Add(time.Hour)
+	checkRoughly(t, timeDiff(clock), -time.Hour, threshold)
+}
 
-	It("adds time when not frozen", func() {
-		clock := NewMock().Add(1 * time.Hour)
-		Check(timeDiff(clock), IsRoughly, -1*time.Hour, threshold)
-	})
+func TestMockFreezes(t *testing.T) {
+	clock := NewMock().Add(time.Hour).Freeze()
+	if !clock.IsFrozen() {
+		t.Fatal("expected frozen")
+	}
+	at := clock.Now()
+	time.Sleep(delay)
+	if !clock.Now().Equal(at) {
+		t.Fatalf("frozen clock moved: %v -> %v", at, clock.Now())
+	}
+}
 
-	It("adds time when frozen", func() {
-		clock := NewMock().Freeze()
-		clock.Add(1 * time.Hour)
-		Check(timeDiff(clock), IsRoughly, -1*time.Hour, threshold)
-	})
+func TestMockFreezesAtPassedInTime(t *testing.T) {
+	clock := NewMock().Freeze().Set(fixedTime)
+	if !clock.IsFrozen() {
+		t.Fatal("expected frozen")
+	}
+	time.Sleep(delay)
+	if !clock.Now().Equal(fixedTime) {
+		t.Fatalf("got %v, want %v", clock.Now(), fixedTime)
+	}
+}
 
-	It("freezes", func() {
-		clock := NewMock().Add(1 * time.Hour).Freeze()
-		Check(clock.IsFrozen(), IsTrue)
-		clockNow := clock.Now()
+func TestMockUnfreezes(t *testing.T) {
+	clock := NewMock().Freeze()
+	if !clock.IsFrozen() {
+		t.Fatal("expected frozen")
+	}
+	old := clock.Now()
+	time.Sleep(delay)
+	clock.Unfreeze()
+	if clock.IsFrozen() {
+		t.Fatal("expected unfrozen")
+	}
+	checkRoughly(t, old.Sub(clock.Now()), 0, threshold)
+}
 
-		time.Sleep(delay)
-
-		Check(clock.Now(), IsSameTimeAs, clockNow)
-	})
-
-	It("freezes at passed-in time", func() {
-		clock := NewMock().Freeze().Set(fixedTime)
-		Check(clock.IsFrozen(), IsTrue)
-
-		time.Sleep(delay)
-
-		Check(clock.Now(), IsSameTimeAs, fixedTime)
-	})
-
-	It("unfreezes", func() {
-		clock := NewMock().Freeze()
-		Check(clock.IsFrozen(), IsTrue)
-		old := clock.Now()
-
-		time.Sleep(delay)
-
-		clock.Unfreeze()
-		Check(clock.IsFrozen(), IsFalse)
-		Check(old.Sub(clock.Now()), IsRoughly, 0, threshold)
-	})
-
-	It("can sleep", func() {
-		clock := NewMock()
-
-		slept := durationOf(func() { clock.Sleep(delay) })
-		Check(slept, IsRoughly, delay, threshold)
-	})
-})
+func TestMockSleep(t *testing.T) {
+	clock := NewMock()
+	checkRoughly(t, durationOf(func() { clock.Sleep(delay) }), delay, threshold)
+}

@@ -1,7 +1,6 @@
 package clock
 
 import (
-	. "github.com/101loops/bdd"
 	"testing"
 	"time"
 )
@@ -11,20 +10,26 @@ var (
 	threshold = 100 * time.Millisecond
 )
 
-func TestSuite(t *testing.T) {
-	RunSpecs(t, "Clock Suite")
-}
+func now() time.Time { return time.Now() }
 
-func now() time.Time {
-	return time.Now()
-}
-
-func timeDiff(c Clock) time.Duration {
-	return time.Now().Sub(c.Now())
-}
+func timeDiff(c Clock) time.Duration { return time.Now().Sub(c.Now()) }
 
 func durationOf(fn func()) time.Duration {
-	beforeSleep := now()
+	before := now()
 	fn()
-	return now().Sub(beforeSleep)
+	return now().Sub(before)
+}
+
+func checkRoughly(t *testing.T, got, want, tol time.Duration) {
+	t.Helper()
+	if d := got - want; d < -tol || d > tol {
+		t.Fatalf("got %v, want %v +/- %v", got, want, tol)
+	}
+}
+
+func checkLess(t *testing.T, got, max time.Duration) {
+	t.Helper()
+	if got >= max {
+		t.Fatalf("got %v, want < %v", got, max)
+	}
 }
