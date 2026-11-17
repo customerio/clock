@@ -46,6 +46,9 @@ func TestMockFreezes(t *testing.T) {
 
 func TestMockFreezesAtPassedInTime(t *testing.T) {
 	clock := NewMock().Freeze().Set(fixedTime)
+	if !clock.IsFrozen() {
+		t.Fatal("expected frozen")
+	}
 	time.Sleep(delay)
 	if !clock.Now().Equal(fixedTime) {
 		t.Fatalf("got %v, want %v", clock.Now(), fixedTime)
@@ -54,6 +57,9 @@ func TestMockFreezesAtPassedInTime(t *testing.T) {
 
 func TestMockUnfreezes(t *testing.T) {
 	clock := NewMock().Freeze()
+	if !clock.IsFrozen() {
+		t.Fatal("expected frozen")
+	}
 	old := clock.Now()
 	time.Sleep(delay)
 	clock.Unfreeze()
