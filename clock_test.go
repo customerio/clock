@@ -1,32 +1,25 @@
 package clock
 
-import . "github.com/101loops/bdd"
+import "testing"
 
-var _ = Describe("Clock Work", func() {
+func TestWorkNow(t *testing.T) {
+	Work = New()
+	checkLess(t, Now().Sub(now()), delay)
+}
 
-	It("Now()", func() {
-		Work = New()
-		Check(Now().Sub(now()), IsLessThan, delay)
-	})
+func TestWorkSleep(t *testing.T) {
+	checkRoughly(t, durationOf(func() { Sleep(delay) }), delay, threshold)
+}
 
-	It("Sleep()", func() {
-		slept := durationOf(func() { Sleep(delay) })
-		Check(slept, IsRoughly, delay, threshold)
-	})
+func TestWorkAfter(t *testing.T) {
+	checkRoughly(t, durationOf(func() { <-After(delay) }), delay, threshold)
+}
 
-	It("After()", func() {
-		elapsed := durationOf(func() { <-After(delay) })
-		Check(elapsed, IsRoughly, delay, threshold)
-	})
+func TestWorkTicker(t *testing.T) {
+	ticker := Ticker(delay).C
+	checkRoughly(t, durationOf(func() { <-ticker; <-ticker }), 2*delay, threshold)
+}
 
-	It("Ticker()", func() {
-		ticker := Ticker(delay).C
-		elapsed := durationOf(func() { <-ticker; <-ticker })
-		Check(elapsed, IsRoughly, 2*delay, threshold)
-	})
-
-	It("Tick()", func() {
-		elapsed := durationOf(func() { <-Tick(delay); <-Tick(delay) })
-		Check(elapsed, IsRoughly, 2*delay, threshold)
-	})
-})
+func TestWorkTick(t *testing.T) {
+	checkRoughly(t, durationOf(func() { <-Tick(delay); <-Tick(delay) }), 2*delay, threshold)
+}
